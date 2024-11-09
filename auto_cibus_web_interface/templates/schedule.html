@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>Schedule Job</h2>
+<form action="/schedule" method="post">
+  <label>Days of the week:</label><br>
+  <input type="checkbox" name="days" value="0" {% if '0' in schedule.days %}checked{% endif %}> Monday<br>
+  <input type="checkbox" name="days" value="1" {% if '1' in schedule.days %}checked{% endif %}> Tuesday<br>
+  <input type="checkbox" name="days" value="2" {% if '2' in schedule.days %}checked{% endif %}> Wednesday<br>
+  <input type="checkbox" name="days" value="3" {% if '3' in schedule.days %}checked{% endif %}> Thursday<br>
+  <input type="checkbox" name="days" value="4" {% if '4' in schedule.days %}checked{% endif %}> Friday<br>
+  <input type="checkbox" name="days" value="5" {% if '5' in schedule.days %}checked{% endif %}> Saturday<br>
+  <input type="checkbox" name="days" value="6" {% if '6' in schedule.days %}checked{% endif %}> Sunday<br><br>
+
+  <label>Time:</label><br>
+  <input type="time" name="time" value="{{ schedule.time }}"><br><br>
+
+  <input type="submit" value="Save Schedule">
+</form>
+<a href="/">Back to Dashboard</a>
+</body>
+</html>

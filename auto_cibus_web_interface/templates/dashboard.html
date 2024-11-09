@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+</head>
+<body>
+<h2>Welcome, {{ username }}</h2>
+
+<div id='calendar'></div>
+<a href="/schedule"><button>Go to Scheduler</button></a>
+<a href="/logout">Logout</a>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: function(fetchInfo, successCallback, failureCallback) {
+                fetch('/get_schedule')
+                    .then(response => response.json())
+                    .then(data => {
+                        const events = data.map(date => ({
+                            title: 'Scheduled Job',
+                            start: date,
+                            color: '#378006'  // Scheduled jobs in green
+                        }));
+                        successCallback(events);
+                    })
+                    .catch(error => failureCallback(error));
+            }
+        });
+        calendar.render();
+    });
+</script>
+
+</body>
+</html>

@@ -4,6 +4,7 @@ import datetime
 import os
 
 from playwright.sync_api import Playwright, sync_playwright, Page, expect
+from auto_daily_cibus_job.playwright_page_interface import PlaywrightPageInterface
 
 
 # WILL ONLY RUN BETWEEN SUNDAY AND THURSDAY
@@ -12,7 +13,6 @@ from playwright.sync_api import Playwright, sync_playwright, Page, expect
 # CIBUS_PASSWORD
 # LIVE=true/false (if wanting to go with purchase or no
 # PRICE_OF_COUPON (an int of the price of coupon you want to buy)
-
 
 
 # TODO check worker schedule in sela
@@ -70,6 +70,9 @@ class CibusInterface:
         self._page.get_by_label("מייל/מס' נייד/שם משתמש").press("Enter")
         self._page.get_by_label("מה הסיסמה?").fill(f"{password}")
         self._page.get_by_label("מה הסיסמה?").press("Enter")
+        time.sleep(5)
+        self._page.wait_for_load_state()
+        expect(self._page).not_to_have_url("https://consumers.pluxee.co.il/login")
 
     def check_if_was_used_today(self):
         self._page.goto("https://consumers.pluxee.co.il/user/orders")
@@ -83,8 +86,8 @@ class CibusInterface:
         starting_date = calendar_date_from_to.locator(".mat-date-range-input-mirror").all()[1]
         expect(starting_date).to_contain_text(self._today_date)
 
-
-        if starting_date.inner_text() == self._today_date and self._page.locator("app-dynamic-table").inner_text() == "לא נמצאו נתונים":
+        if starting_date.inner_text() == self._today_date and self._page.locator(
+                "app-dynamic-table").inner_text() == "לא נמצאו נתונים":
             return False
         else:
             page_history = self._page.get_by_text("פירוט עסקאותבחר טווח תאריכים")
@@ -123,6 +126,7 @@ def main():
     if check_if_workday():
         exit(1)
 
+    local_run = os.getenv("LOCAL_RUN")
     link_to_coupon = os.getenv("LINK_TO_COUPON")
     price_of_coupon = os.getenv("PRICE_OF_COUPON")
     cibus_username = os.getenv("CIBUS_USERNAME")
@@ -130,32 +134,30 @@ def main():
     is_live = os.getenv("LIVE")
     headless = False if os.getenv("HEADLESS") == "false" else True
 
-    # try:
-    playwright = sync_playwright()
-    context = playwright.start().chromium.launch(headless=headless).new_context()
-    # context.tracing.start(screenshots=True, snapshots=True, sources=True)
-    page = context.new_page()
-    cibus_interface = CibusInterface(page=page)
-    cibus_interface.login(
-        username=cibus_username,
-        password=cibus_password
-    )
+    playwright_page_interface = PlaywrightPageInterface()
 
-    time.sleep(3)
+    page = playwright_page_interface.page_init(headless=headless)
 
-    # TODO find better way to exit
-    if cibus_interface.check_if_was_used_today():
-        raise Exception("""The cibus was used today!""")
-    else:
-        cibus_interface.order_by_link(link_to_coupon=link_to_coupon, price_of_coupon=price_of_coupon, live=is_live)
-        # else:
-        #     cibus_interface.order_same_as_last_cibus(live=is_live)
-    # except:
-    #     print(os.getcwd())
-    #     print("stoping trace")
-    #     context.tracing.stop(path="/tracing/trace.zip")
+    try:
+
+        cibus_interface = CibusInterface(page=page)
+        cibus_interface.login(
+            username=cibus_username,
+            password=cibus_password
+        )
+
+        time.sleep(3)
+
+        # TODO find better way to exit
+        if cibus_interface.check_if_was_used_today():
+            raise Exception("""The cibus was used today!""")
+        else:
+            cibus_interface.order_by_link(link_to_coupon=link_to_coupon, price_of_coupon=price_of_coupon, live=is_live)
+
+    except:
+        playwright_page_interface.save_trace(cibus_username=cibus_username, local_run=local_run)
+        raise
 
 
 if __name__ == '__main__':
     main()
-

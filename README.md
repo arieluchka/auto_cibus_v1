@@ -10,3 +10,6 @@ type1 - daily job. will run every day and check for conditions (sunday-thursday/
 
 type2 - monthly job to finish all remaining money. (job will run at the last day of each month/at the last workday of each month). job will check remaining cibus money and use it all in wolt giftcards/cibus super gift cards
 
+---
+
+USERS_PATH - path to where user config files are stored
